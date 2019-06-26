@@ -55,9 +55,9 @@ class ConfigTask {
 	}
 
 	async logTime() {
-		const { page } = this
+		const { page, configuration } = this
 
-		await page.goto('http://jira.n-cube.co.uk:8099/browse/CMT-423', {
+		await page.goto(`http://jira.n-cube.co.uk:8099/browse/${configuration.taskID}`, {
 			waitUntil: 'networkidle2',
 			timeout: 3000000,
 		})
