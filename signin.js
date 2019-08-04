@@ -17,4 +17,5 @@ async function signIn(page, JIRA_LOGIN, JIRA_PASSWORD) {
 	await page.waitForSelector(CREATE_TASK_POPOVER_OPEN_LINK)
 }
 
-module.exports = { signIn }
+// module.exports = { signIn }
+export {signIn}

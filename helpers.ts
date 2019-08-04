@@ -11,8 +11,8 @@ function getCurrentMonth() {
 }
 
 function isWeekday(year, month, day) {
-	var day = new Date(year, month - 1, day).getDay()
-	return day != 0 && day != 6
+	var dayInWeek = new Date(year, month - 1, day).getDay()
+	return dayInWeek != 0 && dayInWeek != 6
 }
 
 function daysInMonth(month, year) {
@@ -38,4 +38,5 @@ module.exports = {
 	getCurrentMonth,
 	getCurrentYear,
 	getWorkDay,
+	getWorkDaysInMonth,
 }

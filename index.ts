@@ -1,6 +1,6 @@
-const puppeteer = require('puppeteer')
-const { signIn } = require('./signin')
-const { createTasksAndLogTime } = require("./createTaksAndLogTime")
+import puppeteer from 'puppeteer'
+import { signIn } from './signIn'
+import { createTasksAndLogTime } from './createTaksAndLogTime'
 
 async function createBrowser() {
 	const browser = await puppeteer.launch({
@@ -26,8 +26,7 @@ async function createBrowser() {
 	return { browser, page }
 }
 
-async function runInteraction({jiraLogin: JIRA_LOGIN, jiraPassword: JIRA_PASSWORD, tasks }) {
-
+async function runInteraction({ jiraLogin: JIRA_LOGIN, jiraPassword: JIRA_PASSWORD, tasks }) {
 	const { page, browser } = await createBrowser()
 	await signIn(page, JIRA_LOGIN, JIRA_PASSWORD)
 	await createTasksAndLogTime(page, tasks)
@@ -35,6 +34,4 @@ async function runInteraction({jiraLogin: JIRA_LOGIN, jiraPassword: JIRA_PASSWOR
 	await browser.close()
 }
 
-module.exports = {
-	runInteraction,
-}
+export { runInteraction }
