@@ -4,6 +4,7 @@
   "description": "App which helps you fill jira without pain",
   "main": "index.js",
   "scripts": {
+    "dev:local": "LOCAL=true node main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

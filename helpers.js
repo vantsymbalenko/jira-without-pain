@@ -11,12 +11,12 @@ function getCurrentMonth() {
 }
 
 function isWeekday(year, month, day) {
-	var day = new Date(year, month, day).getDay()
+	var day = new Date(year, month - 1, day).getDay()
 	return day != 0 && day != 6
 }
 
 function daysInMonth(month, year) {
-	return new Date(year, month - 1, 0).getDate()
+	return new Date(year, month, 0).getDate()
 }
 
 function getWorkDaysInMonth(year, month) {
