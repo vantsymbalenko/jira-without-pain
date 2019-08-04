@@ -1,8 +1,13 @@
-import puppeteer from 'puppeteer'
+import puppeteer, { Browser, Page } from 'puppeteer'
 import { signIn } from './signIn'
-import { createTasksAndLogTime } from './createTaksAndLogTime'
+import { createTasksAndLogTime, TaskConfiguration } from './createTaksAndLogTime'
 
-async function createBrowser() {
+interface BrowserAndPage {
+	browser: Browser
+	page: Page
+}
+
+async function createBrowser(): Promise<BrowserAndPage> {
 	const browser = await puppeteer.launch({
 		headless: false,
 		slowMo: 50,
@@ -26,7 +31,17 @@ async function createBrowser() {
 	return { browser, page }
 }
 
-async function runInteraction({ jiraLogin: JIRA_LOGIN, jiraPassword: JIRA_PASSWORD, tasks }) {
+interface InteractionParameters {
+	jiraLogin: string
+	jiraPassword: string
+	tasks: TaskConfiguration[] | string[]
+}
+
+async function runInteraction({
+	jiraLogin: JIRA_LOGIN,
+	jiraPassword: JIRA_PASSWORD,
+	tasks,
+}: InteractionParameters): Promise<void> {
 	const { page, browser } = await createBrowser()
 	await signIn(page, JIRA_LOGIN, JIRA_PASSWORD)
 	await createTasksAndLogTime(page, tasks)
