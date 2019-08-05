@@ -1,5 +1,5 @@
 import { Page, ElementHandle } from 'puppeteer'
-import { getCurrentYear, getCurrentMonth, getWorkDay } from './helpers'
+import { getCurrentYear, getCurrentMonth, getWorkDay, getWorkDaysInMonth, consoleWarning } from './helpers'
 import {
 	CREATE_TASK_POPOVER_OPEN_LINK,
 	CREATE_TASK_POPOVER_POPOVER,
@@ -15,7 +15,10 @@ import {
 	LOG_WORK_COMMENT_INPUT,
 	LOG_WORK_SUBMIT_BUTTON,
 } from './selectors'
-
+export interface Options {
+	randomlyCompleteFill: boolean // randomly complete filling report by existing tasks
+	randomFill: boolean // randomly fill report
+}
 export interface TaskConfiguration {
 	day: number
 	month: string
@@ -29,12 +32,14 @@ export interface TaskConfiguration {
 	taskID: null | string
 }
 
+const SPENT_HOURS: number = 8
+
 const TASK_CONFIGURATION: TaskConfiguration = {
 	day: null,
 	month: getCurrentMonth().name,
 	year: getCurrentYear(),
 	date: '',
-	spentHours: 8,
+	spentHours: SPENT_HOURS,
 	title: '',
 	description: '',
 	hours: '09:00 AM',
@@ -66,9 +71,19 @@ class ConfigTask {
 		}
 		const { day, month, year, hours } = this.configuration
 		this.configuration.date = `${day}/${month}/${year % 100} ${hours}`
+		if (this.configuration.spentHours < SPENT_HOURS) {
+			consoleWarning(
+				`Time for ${
+					this.configuration.date
+				} was set manually. You should control spend hours by yourself for this day.`,
+			)
+		}
 	}
 
 	async createTask(): Promise<void> {
+		if (this.configuration.taskID) {
+			return
+		}
 		const { page } = this
 		await page.click(CREATE_TASK_POPOVER_OPEN_LINK)
 		await page.waitForSelector(CREATE_TASK_POPOVER_POPOVER)
@@ -107,7 +122,11 @@ class ConfigTask {
 	}
 }
 
-async function createTasksAndLogTime(page: Page, tasks: TaskConfiguration[] | string[]): Promise<void> {
+async function createTasksAndLogTime(
+	page: Page,
+	tasks: TaskConfiguration[] | string[],
+	options: Options,
+): Promise<void> {
 	for (let i = 0; i < tasks.length; i++) {
 		const task: ConfigTask = new ConfigTask(page, tasks[i], i)
 		await task.createTask()

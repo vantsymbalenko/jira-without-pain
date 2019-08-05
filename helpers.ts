@@ -2,12 +2,25 @@ function getCurrentYear(): number {
 	return new Date().getFullYear()
 }
 
-interface CurrentMonth{
-	name: 'Jan' | 'Feb' | 'Mar' | 'Apr'| 'May'| 'Jun'| 'Jul'| 'Aug'| 'Sep'| 'Oct'| 'Nov'| 'Dec'
+interface CurrentMonth {
+	name: 'Jan' | 'Feb' | 'Mar' | 'Apr' | 'May' | 'Jun' | 'Jul' | 'Aug' | 'Sep' | 'Oct' | 'Nov' | 'Dec'
 	index: number
 }
 function getCurrentMonth(): CurrentMonth {
-	const monthNames: CurrentMonth['name'][] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+	const monthNames: CurrentMonth['name'][] = [
+		'Jan',
+		'Feb',
+		'Mar',
+		'Apr',
+		'May',
+		'Jun',
+		'Jul',
+		'Aug',
+		'Sep',
+		'Oct',
+		'Nov',
+		'Dec',
+	]
 	return {
 		name: monthNames[new Date().getMonth()],
 		index: new Date().getMonth(),
@@ -38,4 +51,19 @@ function getWorkDay(year: number, month: number, dayIndex: number): number {
 	return getWorkDaysInMonth(year, month)[dayIndex]
 }
 
-export { getCurrentMonth, getCurrentYear, getWorkDay, getWorkDaysInMonth }
+function joinReset(color: string) {
+	const reset = '%s\x1b[0m'
+	return color + reset
+}
+
+function consoleEror(message: string) {
+	const messageColor: string = '\x1b[31m'
+	return console.log(joinReset(messageColor), message)
+}
+
+function consoleWarning(message: string) {
+	const messageColor: string = '\x1b[33m'
+	return console.log(joinReset(messageColor), message)
+}
+
+export { getCurrentMonth, getCurrentYear, getWorkDay, getWorkDaysInMonth, consoleEror, consoleWarning }
