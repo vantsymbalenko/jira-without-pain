@@ -36,7 +36,7 @@ interface InteractionParameters {
 	jiraLogin: string
 	jiraPassword: string
 	tasks: TaskConfiguration[] | string[]
-	options?: Options
+	options?: Partial<Options>
 }
 
 async function runInteraction({
@@ -47,6 +47,7 @@ async function runInteraction({
 }: InteractionParameters): Promise<void> {
 	if(options.randomFill && options.randomlyCompleteFill){
 		consoleEror("Both randomFill and randomlyCompleteFill was specified. Please choose only one options.")
+		return;
 	}
 	const { page, browser } = await createBrowser()
 	await signIn(page, JIRA_LOGIN, JIRA_PASSWORD)

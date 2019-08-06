@@ -1,9 +1,10 @@
 function getCurrentYear(): number {
 	return new Date().getFullYear()
 }
-
-interface CurrentMonth {
+export interface Month {
 	name: 'Jan' | 'Feb' | 'Mar' | 'Apr' | 'May' | 'Jun' | 'Jul' | 'Aug' | 'Sep' | 'Oct' | 'Nov' | 'Dec'
+}
+export interface CurrentMonth extends Month {
 	index: number
 }
 function getCurrentMonth(): CurrentMonth {
@@ -66,4 +67,10 @@ function consoleWarning(message: string) {
 	return console.log(joinReset(messageColor), message)
 }
 
-export { getCurrentMonth, getCurrentYear, getWorkDay, getWorkDaysInMonth, consoleEror, consoleWarning }
+function getRandomInt(min:number, max:number): number {
+	min = Math.ceil(min);
+	max = Math.floor(max);
+	return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+  }
+
+export { getCurrentMonth, getCurrentYear, getWorkDay, getWorkDaysInMonth, consoleEror, consoleWarning, getRandomInt }
