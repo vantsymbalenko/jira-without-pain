@@ -1,5 +1,14 @@
 import { Page, ElementHandle } from 'puppeteer'
-import { getCurrentYear, getCurrentMonth, getWorkDay, getWorkDaysInMonth, consoleWarning, Month, CurrentMonth, getRandomInt } from './helpers'
+import {
+	getCurrentYear,
+	getCurrentMonth,
+	getWorkDay,
+	getWorkDaysInMonth,
+	consoleWarning,
+	Month,
+	CurrentMonth,
+	getRandomInt,
+} from './helpers'
 import {
 	CREATE_TASK_POPOVER_OPEN_LINK,
 	CREATE_TASK_POPOVER_POPOVER,
@@ -15,6 +24,7 @@ import {
 	LOG_WORK_COMMENT_INPUT,
 	LOG_WORK_SUBMIT_BUTTON,
 } from './selectors'
+import { createTask, logWork, createTasks, logTasks } from './puppeteerActions'
 
 export interface Options {
 	randomlyCompleteFill: boolean // randomly complete filling report by existing tasks
@@ -78,9 +88,7 @@ class ConfigTask {
 		this.configuration.date = `${day}/${month}/${year % 100} ${hours}`
 		if (this.configuration.spentHours < SPENT_HOURS) {
 			consoleWarning(
-				`Time for ${
-					this.configuration.date
-				} was set manually. You should control spend hours by yourself for this day.`,
+				`Time for ${this.configuration.date} was set manually. You should control spend hours by yourself for this day.`,
 			)
 		}
 	}
@@ -127,9 +135,15 @@ class ConfigTask {
 	}
 }
 
-function generateConfigurationsForTasks(tasks: any[]): TaskConfiguration[]{
-	const tasksObj = tasks.map(task => {
+function generateConfigurationsForTasks(
+	tasks: any[],
+	workDaysInMonth: number[],
+	{ month, year, logTime, spentHours }: Partial<Options>,
+): TaskConfiguration[] {
+	const tasksObj = tasks.map((task, index) => {
 		const configuration: TaskConfiguration = Object.assign({}, TASK_CONFIGURATION)
+		configuration.spentHours = spentHours
+		configuration.date = `${workDaysInMonth[index]}/${month.name}/${year % 100} ${logTime}`
 		switch (typeof task) {
 			case 'string': {
 				configuration.title = task
@@ -137,59 +151,18 @@ function generateConfigurationsForTasks(tasks: any[]): TaskConfiguration[]{
 				break
 			}
 			case 'object': {
-				Object.assign(
-					configuration,
-					task,
-				)
+				Object.assign(configuration, task)
 				break
 			}
 		}
 		if (configuration.spentHours < SPENT_HOURS) {
 			consoleWarning(
-				`Time for ${
-					this.configuration.date
-				} was set manually. You should control spend hours by yourself for this day.`,
+				`Time for ${this.configuration.date} was set manually. You should control spend hours by yourself for this day.`,
 			)
 		}
-		return configuration;
+		return configuration
 	})
-	return tasksObj;
-}
-
-async function createTask(page: Page, task: TaskConfiguration): Promise<string> {
-		await page.click(CREATE_TASK_POPOVER_OPEN_LINK)
-		await page.waitForSelector(CREATE_TASK_POPOVER_POPOVER)
-		await page.select(CREATE_TASK_POPOVER_SELECT_TYPE, task.type)
-		await page.click(CREATE_TASK_POPOVER_SUBMIT_BUTTON)
-		await page.waitForSelector(SUMMARY_PAGE_SUMMARY_FIELD)
-
-		await page.type(SUMMARY_PAGE_SUMMARY_FIELD, task.title)
-		await page.click(SUMMARY_PAGE_SUBMIT_BUTTON)
-
-		await page.waitForSelector(TASK_DETAILS_PAGE_TASK_ID_LINK)
-		const aWithTaskID: ElementHandle = await page.$(TASK_DETAILS_PAGE_TASK_ID_LINK)
-		const taskID: string = await page.evaluate(element => element.textContent, aWithTaskID)
-		return taskID
-}
-
-async function logWork(page: Page, task: TaskConfiguration, options: any){
-	await page.goto(`${LOG_WORK_URL}${task.taskID}`, {
-		waitUntil: 'networkidle2',
-		timeout: 3000000,
-	})
-	await page.click(LOG_WORK_LOG_BUTTON)
-	await page.waitForSelector(LOG_WORK_SPENT_HOURS_INPUT)
-	await page.type(LOG_WORK_SPENT_HOURS_INPUT, options.spentHours + '')
-	
-	const dateInput: ElementHandle = await page.$(LOG_WORK_DATE_INPUT)
-	await dateInput.click({ clickCount: 3 })
-	
-	const date = `${options.day}/${options.month}/${options.year % 100} ${options.logTime}`
-	await dateInput.type(date)
-	await page.type(LOG_WORK_COMMENT_INPUT, task.description)
-	await page.click(LOG_WORK_SUBMIT_BUTTON)
-
-	await page.waitForSelector(CREATE_TASK_POPOVER_OPEN_LINK)
+	return tasksObj
 }
 
 async function createTasksAndLogTime(
@@ -201,26 +174,26 @@ async function createTasksAndLogTime(
 		month = getCurrentMonth(),
 		year = getCurrentYear(),
 		spentHours = 8,
-		logTime = '09:00 AM'
+		logTime = '09:00 AM',
 	}: Partial<Options>,
 ): Promise<void> {
-	const generatedTasks = generateConfigurationsForTasks(tasks)
-	//TODO: fix issue with month;
-	if(randomFill){
-		for(let i = 0; i < getWorkDaysInMonth(year, month.index).length; ++i){
-			const taskIndex = getRandomInt(0, generatedTasks.length);
-			if(!generatedTasks[taskIndex].taskID){
-				const taskId = await createTask(page, generatedTasks[taskIndex])
-				generatedTasks[taskIndex].taskID = taskId;
-			}
-			await logWork(page, generatedTasks[taskIndex], {month: month.name, day: getWorkDay(year, month.index, i), year, spentHours, logTime})
+	const workDaysInMonth = getWorkDaysInMonth(year, month.index + 1)
+	const generatedTasks = generateConfigurationsForTasks(tasks, workDaysInMonth, { month, year, logTime, spentHours })
+	let createdTasks = await createTasks(page, generatedTasks)
+
+	// randomly fill report using generated tasks
+	if (randomFill) {
+		const randomTasks = []
+		for (let a = 0; a < workDaysInMonth.length; ++a) {
+			const randomInt = getRandomInt(0, createTasks.length - 1)
+			const randomTask = Object.assign({}, createdTasks[randomInt])
+			randomTask.date = `${workDaysInMonth[a]}/${month.name}/${year % 100} ${logTime}`
+			randomTasks.push(randomTask)
 		}
+		createdTasks = Array.from(randomTasks)
 	}
-	// for (let i = 0; i < tasks.length; i++) {
-	// 	const task: ConfigTask = new ConfigTask(page, tasks[i], i)
-	// 	await task.createTask()
-	// 	await task.logTime()
-	// }
+
+	await logTasks(page, createdTasks)
 }
 
 export { createTasksAndLogTime }

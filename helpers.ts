@@ -41,8 +41,8 @@ function getWorkDaysInMonth(year: number, month: number): number[] {
 	var days = daysInMonth(year, month)
 	var weekdays = []
 	for (var i = 0; i < days; i++) {
-		if (isWeekday(year, month, i + 1)) {
-			weekdays.push(i + 1)
+		if (isWeekday(year, month, i)) {
+			weekdays.push(i)
 		}
 	}
 	return weekdays

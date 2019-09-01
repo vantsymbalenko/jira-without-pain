@@ -16,6 +16,8 @@ const SUMMARY_PAGE_SUMMARY_FIELD: string = '#summary'
 const SUMMARY_PAGE_SUBMIT_BUTTON: string = '#create_submit'
 // task details page
 const TASK_DETAILS_PAGE_TASK_ID_LINK: string = '#key-val'
+// main page for creating task
+const MAIN_PAGE_CREATE_TASK = 'http://localhost:3000/create-task'
 // log work hours page
 const LOG_WORK_URL: string = process.env.LOCAL
 	? 'http:/localhost:3000/log-work/'
@@ -45,4 +47,5 @@ export {
 	LOG_WORK_DATE_INPUT,
 	LOG_WORK_COMMENT_INPUT,
 	LOG_WORK_SUBMIT_BUTTON,
+	MAIN_PAGE_CREATE_TASK,
 }

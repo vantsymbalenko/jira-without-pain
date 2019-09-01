@@ -1,7 +1,7 @@
 import puppeteer, { Browser, Page } from 'puppeteer'
 import { signIn } from './signIn'
 import { createTasksAndLogTime, TaskConfiguration, Options } from './createTaksAndLogTime'
-import { consoleEror } from './helpers';
+import { consoleEror } from './helpers'
 
 interface BrowserAndPage {
 	browser: Browser
@@ -11,7 +11,7 @@ interface BrowserAndPage {
 async function createBrowser(): Promise<BrowserAndPage> {
 	const browser = await puppeteer.launch({
 		headless: false,
-		slowMo: 50,
+		slowMo: 5,
 	})
 	const page = await browser.newPage()
 
@@ -43,11 +43,11 @@ async function runInteraction({
 	jiraLogin: JIRA_LOGIN,
 	jiraPassword: JIRA_PASSWORD,
 	tasks,
-	options
+	options,
 }: InteractionParameters): Promise<void> {
-	if(options.randomFill && options.randomlyCompleteFill){
-		consoleEror("Both randomFill and randomlyCompleteFill was specified. Please choose only one options.")
-		return;
+	if (options.randomFill && options.randomlyCompleteFill) {
+		consoleEror('Both randomFill and randomlyCompleteFill was specified. Please choose only one options.')
+		return
 	}
 	const { page, browser } = await createBrowser()
 	await signIn(page, JIRA_LOGIN, JIRA_PASSWORD)
