@@ -59,7 +59,9 @@ async function createTasks(page: Page, tasks: TaskConfiguration[]): Promise<Task
 	for (let i = 0; i < tasks.length; ++i) {
 		const taskId = await createTask(page, tasks[i])
 
-		await page.goto(MAIN_PAGE_CREATE_TASK)
+		if (process.env.LOCAL) {
+			await page.goto(MAIN_PAGE_CREATE_TASK)
+		}
 		await page.waitForSelector(CREATE_TASK_POPOVER_OPEN_LINK)
 
 		tasksWithTaskId[i].taskID = taskId
