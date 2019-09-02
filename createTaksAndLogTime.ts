@@ -142,8 +142,13 @@ function generateConfigurationsForTasks(
 ): TaskConfiguration[] {
 	const tasksObj = tasks.map((task, index) => {
 		const configuration: TaskConfiguration = Object.assign({}, TASK_CONFIGURATION)
+
 		configuration.spentHours = spentHours
+		configuration.day = workDaysInMonth[index]
+		configuration.year = year
+		configuration.month = month.name
 		configuration.date = `${workDaysInMonth[index]}/${month.name}/${year % 100} ${logTime}`
+
 		switch (typeof task) {
 			case 'string': {
 				configuration.title = task
@@ -185,19 +190,28 @@ function createRandomTasks(
 	return randomTasks
 }
 
+const DEFAULT_OPTIONS: Options = {
+	randomFill: false,
+	randomlyCompleteFill: false,
+	month: getCurrentMonth(),
+	year: getCurrentYear(),
+	spentHours: 8,
+	logTime: '09:00 AM',
+}
+
+const optionsGetter = {
+	get: function(target, name) {
+		return target.hasOwnProperty(name) ? target[name] : DEFAULT_OPTIONS[name]
+	},
+}
+
 async function createTasksAndLogTime(
 	page: Page,
 	tasks: TaskConfiguration[] | string[],
 	options: Partial<Options>,
 ): Promise<void> {
-	const {
-		randomFill = false,
-		randomlyCompleteFill = false,
-		month = getCurrentMonth(),
-		year = getCurrentYear(),
-		spentHours = 8,
-		logTime = '09:00 AM',
-	} = options
+	const proxyOptions = new Proxy(options, optionsGetter)
+	const { year, month, logTime, spentHours, randomFill, randomlyCompleteFill } = proxyOptions
 
 	const workDaysInMonth = getWorkDaysInMonth(year, month.index + 1)
 	const generatedTasks = generateConfigurationsForTasks(tasks, workDaysInMonth, { month, year, logTime, spentHours })
@@ -205,13 +219,13 @@ async function createTasksAndLogTime(
 
 	// randomly fill report using generated tasks
 	if (randomFill) {
-		const randomTasks = createRandomTasks(createdTasks, workDaysInMonth.length, workDaysInMonth, options)
+		const randomTasks = createRandomTasks(createdTasks, workDaysInMonth.length, workDaysInMonth, proxyOptions)
 		createdTasks = Array.from(randomTasks)
 	}
 	// randomly complete fill report using generated tasks
 	if (randomlyCompleteFill) {
-		const dayToAppend = workDaysInMonth.filter(day => !!createdTasks.filter(task => task.day !== day).length)
-		const randomTasks = createRandomTasks(createdTasks, dayToAppend.length, dayToAppend, options)
+		const dayToAppend = workDaysInMonth.filter(day => createdTasks.every(task => task.day !== day))
+		const randomTasks = createRandomTasks(createdTasks, dayToAppend.length, dayToAppend, proxyOptions)
 		createdTasks.push(...randomTasks)
 	}
 
