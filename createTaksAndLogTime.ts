@@ -165,32 +165,54 @@ function generateConfigurationsForTasks(
 	return tasksObj
 }
 
+function createRandomTasks(
+	basedTasks: TaskConfiguration[],
+	length: number,
+	workDays: number[],
+	options: Partial<Options>,
+): TaskConfiguration[] {
+	const { month, year, logTime } = options
+	const randomTasks = []
+	for (let a = 0; a < length; ++a) {
+		const randomInt = getRandomInt(0, createTasks.length - 1)
+		const randomTask = Object.assign({}, basedTasks[randomInt])
+		randomTask.day = workDays[a]
+		randomTask.month = month.name
+		randomTask.year = year
+		randomTask.date = `${workDays[a]}/${month.name}/${year % 100} ${logTime}`
+		randomTasks.push(randomTask)
+	}
+	return randomTasks
+}
+
 async function createTasksAndLogTime(
 	page: Page,
 	tasks: TaskConfiguration[] | string[],
-	{
-		randomFill,
-		randomlyCompleteFill,
+	options: Partial<Options>,
+): Promise<void> {
+	const {
+		randomFill = false,
+		randomlyCompleteFill = false,
 		month = getCurrentMonth(),
 		year = getCurrentYear(),
 		spentHours = 8,
 		logTime = '09:00 AM',
-	}: Partial<Options>,
-): Promise<void> {
+	} = options
+
 	const workDaysInMonth = getWorkDaysInMonth(year, month.index + 1)
 	const generatedTasks = generateConfigurationsForTasks(tasks, workDaysInMonth, { month, year, logTime, spentHours })
 	let createdTasks = await createTasks(page, generatedTasks)
 
 	// randomly fill report using generated tasks
 	if (randomFill) {
-		const randomTasks = []
-		for (let a = 0; a < workDaysInMonth.length; ++a) {
-			const randomInt = getRandomInt(0, createTasks.length - 1)
-			const randomTask = Object.assign({}, createdTasks[randomInt])
-			randomTask.date = `${workDaysInMonth[a]}/${month.name}/${year % 100} ${logTime}`
-			randomTasks.push(randomTask)
-		}
+		const randomTasks = createRandomTasks(createdTasks, workDaysInMonth.length, workDaysInMonth, options)
 		createdTasks = Array.from(randomTasks)
+	}
+	// randomly complete fill report using generated tasks
+	if (randomlyCompleteFill) {
+		const dayToAppend = workDaysInMonth.filter(day => !!createdTasks.filter(task => task.day !== day).length)
+		const randomTasks = createRandomTasks(createdTasks, dayToAppend.length, dayToAppend, options)
+		createdTasks.push(...randomTasks)
 	}
 
 	await logTasks(page, createdTasks)
